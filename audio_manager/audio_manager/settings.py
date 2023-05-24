@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "user.apps.UserConfig",
     "audio.apps.AudioConfig",
+    "rest_framework",
 ]
 
 MIDDLEWARE = [
