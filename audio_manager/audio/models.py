@@ -1,12 +1,20 @@
+import os
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from user.models import User
 
 
+def get_audio_messages_upload_path(instance, filename):
+    upload_path = 'audio_messages/{}'.format(filename)
+    os.makedirs(os.path.dirname(upload_path), exist_ok=True)
+    return upload_path
+
+
 class AudioMessage(models.Model):
-    assigned_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='audio_messages_user')
-    audio_file = models.FileField(upload_to='audio_messages/')
-    audio_url = models.URLField()
+    assigned_users = models.ManyToManyField(User, related_name='audio_messages_user')
+    audio_file = models.FileField(upload_to=get_audio_messages_upload_path)
+    audio_url = models.URLField(default='https://example.com')
     text = models.TextField(blank=True)
     duration = models.DurationField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -19,7 +27,7 @@ class AudioMessage(models.Model):
         verbose_name = _('audio message')
         verbose_name_plural = _('audio messages')
 
-    def __str__(self):
+    def str(self):
         return self.transcript
 
 
@@ -31,7 +39,7 @@ class Tag(models.Model):
         verbose_name = _('tag')
         verbose_name_plural = _('tags')
 
-    def __str__(self):
+    def str(self):
         return self.name
 
 
@@ -44,5 +52,5 @@ class Comment(models.Model):
         verbose_name = _('comment')
         verbose_name_plural = _('comments')
 
-    def __str__(self):
+    def str(self):
         return self.text
