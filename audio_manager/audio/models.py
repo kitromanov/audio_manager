@@ -3,10 +3,14 @@ import os
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from user.models import User
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
-def get_audio_messages_upload_path(instance, filename):
-    upload_path = 'audio_messages/{}'.format(filename)
+def get_audio_messages_upload_path(instance, file_name):
+    upload_path = os.getenv("AUDIO_MESSAGE_DIR") + file_name
     os.makedirs(os.path.dirname(upload_path), exist_ok=True)
     return upload_path
 
@@ -28,7 +32,7 @@ class AudioMessage(models.Model):
         verbose_name_plural = _('audio messages')
 
     def str(self):
-        return self.transcript
+        return self.text
 
 
 class Tag(models.Model):
