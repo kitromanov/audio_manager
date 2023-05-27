@@ -7,37 +7,25 @@ from audio.audiomessage_serializer import *
 from audio.models import *
 
 
-class AudioMessageViewSet(viewsets.ModelViewSet):
+class BaseViewSet(viewsets.ModelViewSet):
+    def patch(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
+class AudioMessageViewSet(BaseViewSet):
     queryset = AudioMessage.objects.all()
     serializer_class = AudioMessageSerializer
 
-    def patch(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = AudioMessageSerializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
 
-
-class TagViewSet(viewsets.ModelViewSet):
+class TagViewSet(BaseViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
 
-    # def patch(self, request, *args, **kwargs):
-    #     instance = self.get_object()
-    #     serializer = TagSerializer(instance, data=request.data, partial=True)
-    #     serializer.is_valid(raise_exception=True)
-    #     serializer.save()
-    #     return Response(serializer.data)
 
-
-class CommentViewSet(viewsets.ModelViewSet):
+class CommentViewSet(BaseViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-
-    def patch(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = CommentSerializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
