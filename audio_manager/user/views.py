@@ -26,3 +26,10 @@ class UserViewSet(mixins.CreateModelMixin,
         unconfirmed_users = self.queryset.filter(is_confirmed=False)
         serializer = self.get_serializer(unconfirmed_users, many=True)
         return Response(serializer.data)
+
+    def patch(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = UserSerializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
