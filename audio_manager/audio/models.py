@@ -13,8 +13,8 @@ def get_audio_messages_upload_path(instance, filename):
 
 class AudioMessage(models.Model):
     assigned_users = models.ManyToManyField(User, related_name='audio_messages_user')
+    creator = models.ForeignKey(User, on_delete=models.CASCADE)
     audio_file = models.FileField(upload_to=get_audio_messages_upload_path)
-    audio_url = models.URLField(default='https://example.com')
     text = models.TextField(blank=True)
     duration = models.DurationField()
     created_at = models.DateTimeField(auto_now_add=True)
