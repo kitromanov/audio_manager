@@ -1,9 +1,12 @@
 from rest_framework import viewsets, mixins
 from rest_framework.decorators import action
-from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from user.models import User
-from user.user_serializer import UserSerializer
+from user.user_serializer import UserSerializer, MyTokenObtainPairSerializer
+
+from rest_framework.response import Response
 
 
 class UserViewSet(mixins.CreateModelMixin,
@@ -13,6 +16,7 @@ class UserViewSet(mixins.CreateModelMixin,
                   mixins.DestroyModelMixin,
                   viewsets.GenericViewSet):
     serializer_class = UserSerializer
+    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         pk = self.kwargs.get('pk')
@@ -33,3 +37,8 @@ class UserViewSet(mixins.CreateModelMixin,
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+
+class MyObtainTokenPairView(TokenObtainPairView):
+    permission_classes = (AllowAny,)
+    serializer_class = MyTokenObtainPairSerializer
