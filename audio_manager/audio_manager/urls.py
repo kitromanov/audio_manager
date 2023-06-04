@@ -19,7 +19,7 @@ from django.urls import path, include
 from rest_framework import routers
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 
-from user.views import UserViewSet, MyObtainTokenPairView
+from user.views import UserViewSet
 from audio.views import *
 
 router = routers.DefaultRouter()
@@ -31,8 +31,6 @@ router.register(r'comment', CommentViewSet, basename='comment')
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path('auth/', include('auth.urls')),
     path('api/v1/', include(router.urls)),
-    path('api/token/', MyObtainTokenPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
 ]
