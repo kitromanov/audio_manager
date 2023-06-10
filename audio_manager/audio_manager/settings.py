@@ -40,7 +40,11 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "user.apps.UserConfig",
     "audio.apps.AudioConfig",
-    "rest_framework",
+    'rest_framework',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'rest_auth',
 ]
 
 MIDDLEWARE = [
@@ -160,6 +164,42 @@ DEFAULTS = {
 }
 
 SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=15),
     'ROTATE_REFRESH_TOKENS': True,
 }
+
+# Email settings
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'audiomanagerrigister@gmail.com'
+# EMAIL_HOST_PASSWORD = 'r8b-Jdt-Mnx-Y7d'
+
+# SITE_ID = 1
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# ACCOUNT_EMAIL_REQUIRED = True
+# ACCOUNT_AUTHENTICATION_METHOD = 'email'
+# ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+
+# EMAIL_USE_TLS = True
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_HOST_USER = 'audiomanagerrigister@gmail.com'
+# EMAIL_HOST_PASSWORD = 'r8b-Jdt-Mnx-Y7d'
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# MAILER_EMAIL_BACKEND = EMAIL_BACKEND
+# EMAIL_HOST = 'audiomanagerrigister@gmail.com'
+# EMAIL_HOST_PASSWORD = 'r8b-Jdt-Mnx-Y7d'
+# EMAIL_HOST_PASSWORD = 'wrtrvtbhstlbxvls'
+# EMAIL_HOST_USER = 'audiomanagerrigister@gmail.com'
+# EMAIL_PORT = 465
+# EMAIL_USE_SSL = True
+# DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+EMAIL_USE_TLS=True
+EMAIL_HOST='smtp.gmail.com'
+EMAIL_PORT=587
+EMAIL_HOST_USER='audiomanagerrigister@gmail.com'
+EMAIL_HOST_PASSWORD = 'wrtrvtbhstlbxvls'

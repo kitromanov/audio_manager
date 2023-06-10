@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class UserManager(BaseUserManager):
@@ -31,8 +32,7 @@ class User(AbstractBaseUser):
     email = models.EmailField(max_length=100, unique=True)
     date_joined = models.DateTimeField(auto_now=True)
 
-    # TODO: add email confirmation
-    is_confirmed = models.BooleanField(default=True)
+    is_confirmed = models.BooleanField(default=False)
     is_blocked = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
 
@@ -47,3 +47,10 @@ class User(AbstractBaseUser):
 
     def __str__(self):
         return self.email
+
+    def tokens(self):
+        refresh = RefreshToken.for_user(self)
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
