@@ -1,7 +1,5 @@
 from rest_framework import viewsets, mixins
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework_simplejwt.views import TokenObtainPairView
 
 from user.models import User
 from user.serializer import UserSerializer
@@ -16,7 +14,6 @@ class UserViewSet(mixins.CreateModelMixin,
                   mixins.DestroyModelMixin,
                   viewsets.GenericViewSet):
     serializer_class = UserSerializer
-    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         pk = self.kwargs.get('pk')

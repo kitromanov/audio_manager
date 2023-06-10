@@ -53,13 +53,14 @@ class AudioMessage(models.Model):
 
     @staticmethod
     def get_audio_text(file_name):
-        recognition = RecognitionLongAudio(
-            api_key=os.getenv("API_KEY"),
-            bucket_name=os.getenv("BUCKET")
-        )
-        recognition.upload_to_bucket('', file_name)
-        result = recognition.recognize(file_name)
-        return recognition.get_text_transcription(*result)
+        # recognition = RecognitionLongAudio(
+        #     api_key=os.getenv("API_KEY"),
+        #     bucket_name=os.getenv("BUCKET")
+        # )
+        # recognition.upload_to_bucket('', file_name)
+        # result = recognition.recognize(file_name)
+        # return recognition.get_text_transcription(*result)
+        return 'text'
 
     def save(self, *args, **kwargs):
         file = default_storage.save(self.audio_file.name, self.audio_file)

@@ -17,6 +17,7 @@ load_dotenv()
 # TODO: add .ogg parsing
 # TODO: adding by URL
 class AudioMessageSerializer(serializers.ModelSerializer):
+
     creator = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:

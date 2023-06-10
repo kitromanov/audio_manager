@@ -19,6 +19,7 @@ load_dotenv()
 
 class LoginView(generics.GenericAPIView):
     serializer_class = LoginSerializer
+    permission_classes = (AllowAny,)
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -34,6 +35,7 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = (AllowAny,)
     serializer_class = RegisterSerializer
     renderer_classes = (UserRenderer,)
+
     def post(self, request):
         user = request.data
         serializer = self.serializer_class(data=user)
