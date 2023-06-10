@@ -18,11 +18,15 @@ load_dotenv()
 # TODO: adding by URL
 class AudioMessageSerializer(serializers.ModelSerializer):
 
-    creator = serializers.HiddenField(default=serializers.CurrentUserDefault())
-
     class Meta:
         model = AudioMessage
         fields = '__all__'
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        validated_data['creator'] = user
+
+        return super().create(validated_data)
 
 
 class TagSerializer(serializers.ModelSerializer):
