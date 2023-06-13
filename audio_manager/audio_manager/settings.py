@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'rest_auth',
+    'taggit',
 ]
 
 MIDDLEWARE = [
@@ -135,6 +136,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
 }
 
 DEFAULTS = {
@@ -198,8 +202,8 @@ SIMPLE_JWT = {
 # EMAIL_USE_SSL = True
 # DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-EMAIL_USE_TLS=True
-EMAIL_HOST='smtp.gmail.com'
-EMAIL_PORT=587
-EMAIL_HOST_USER='audiomanagerrigister@gmail.com'
-EMAIL_HOST_PASSWORD = 'wrtrvtbhstlbxvls'
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')

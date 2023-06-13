@@ -1,6 +1,7 @@
 from django.contrib import admin
-from .models import AudioMessage, Tag, Comment
+from taggit.models import Tag
+
+from .models import AudioMessage, Comment
 
 admin.site.register(AudioMessage)
-admin.site.register(Tag)
 admin.site.register(Comment)

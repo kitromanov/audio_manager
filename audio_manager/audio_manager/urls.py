@@ -25,8 +25,8 @@ from audio.views import *
 router = routers.DefaultRouter()
 router.register(r'user', UserViewSet, basename='user')
 router.register(r'audio-message', AudioMessageViewSet, basename='audio-message')
-router.register(r'tag', TagViewSet, basename='tag')
-router.register(r'comment', CommentViewSet, basename='comment')
+# router.register(r'tag', TagViewSet, basename='tag')
+# router.register(r'comment', CommentViewSet, basename='comment')
 
 urlpatterns = [
     path("admin/", admin.site.urls),

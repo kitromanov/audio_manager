@@ -9,6 +9,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
 from audio.recognition import RecognitionLongAudio
+from taggit.managers import TaggableManager
 from user.models import User
 import os
 from dotenv import load_dotenv
@@ -24,7 +25,7 @@ def get_audio_messages_upload_path(instance, filename):
 
 class AudioMessage(models.Model):
     assigned_users = models.ManyToManyField(User, blank=True, related_name='audio_messages_user')
-    creator = models.ForeignKey(User, on_delete=models.CASCADE)
+    creator = models.ForeignKey(User, blank=True, on_delete=models.CASCADE)
     audio_file = models.FileField(upload_to=get_audio_messages_upload_path)
     file_name = models.CharField(max_length=255, default='file')
     text = models.TextField(blank=True)
@@ -34,6 +35,7 @@ class AudioMessage(models.Model):
     incoming_number = models.CharField(max_length=20)
     outgoing_number = models.CharField(max_length=20)
     is_deleted = models.BooleanField(default=False)
+    tags = TaggableManager()
 
     class Meta:
         verbose_name = _('audio message')
@@ -69,18 +71,6 @@ class AudioMessage(models.Model):
         self.file_name = self.audio_file.name
         default_storage.delete(file)
         super().save(*args, **kwargs)
-
-
-class Tag(models.Model):
-    name = models.CharField(max_length=30)
-    audio_messages = models.ManyToManyField(AudioMessage, related_name='tags_audio_message')
-
-    class Meta:
-        verbose_name = _('tag')
-        verbose_name_plural = _('tags')
-
-    def str(self):
-        return self.name
 
 
 class Comment(models.Model):

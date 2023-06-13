@@ -8,6 +8,8 @@ from datetime import timedelta
 import mutagen
 from django.core.files.storage import default_storage
 import os
+from taggit.serializers import (TagListSerializerField,
+                                TaggitSerializer)
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -17,7 +19,6 @@ load_dotenv()
 # TODO: add .ogg parsing
 # TODO: adding by URL
 class AudioMessageSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = AudioMessage
         fields = '__all__'
@@ -29,14 +30,22 @@ class AudioMessageSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
-class TagSerializer(serializers.ModelSerializer):
+class TagSerializer(TaggitSerializer, serializers.ModelSerializer):
+    tags = TagListSerializerField()
+
     class Meta:
-        model = Tag
+        model = AudioMessage
         fields = '__all__'
 
 
+# class TagSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Tag
+#         fields = '__all__'
+
+
 class CommentSerializer(serializers.ModelSerializer):
-    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    # user = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:
         model = Comment
