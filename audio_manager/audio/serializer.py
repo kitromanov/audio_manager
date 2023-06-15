@@ -38,12 +38,6 @@ class TagSerializer(TaggitSerializer, serializers.ModelSerializer):
         fields = '__all__'
 
 
-# class TagSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Tag
-#         fields = '__all__'
-
-
 class CommentSerializer(serializers.ModelSerializer):
     # user = serializers.HiddenField(default=serializers.CurrentUserDefault())
 

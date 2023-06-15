@@ -35,7 +35,6 @@ class LoginSerializer(serializers.ModelSerializer):
         password = attrs.get('password', '')
 
         user = auth.authenticate(email=email, password=password)
-        print(user)
         if not user.is_confirmed:
             raise AuthenticationFailed('Email is not verified.')
         if user.is_blocked:
@@ -50,29 +49,14 @@ class LoginSerializer(serializers.ModelSerializer):
         }
 
         return super().validate(attrs)
-        # credentials = {
-        #     'username': '',
-        #     'password': attrs.get("password")
-        # }
-        #
-        # email_address = attrs.get("email")
-        # is_confirmed = User.objects.get(email=attrs.get("email")).is_confirmed
-        #
-        # if email_address and is_confirmed:
-        #     credentials['email'] = email_address
-        #     return super().validate(credentials)
-        # elif email_address and not is_confirmed:
-        #     return {'message': 'Email not verified'}
-        # else:
-        #     return {'message': 'This email does not exist, please create a new account'}
 
-    # @classmethod
-    # def get_token(cls, user):
-    #     token = super(MyTokenObtainPairSerializer, cls).get_token(user)
-    #
-    #     token['username'] = user.username
-    #
-    #     return token
+
+class EmailVerificationSerializer(serializers.ModelSerializer):
+    token = serializers.CharField(max_length=255)
+
+    class Meta:
+        model = User
+        fields = ['token']
 
 
 class RegisterSerializer(serializers.ModelSerializer):

@@ -1,3 +1,5 @@
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter, extend_schema_view, OpenApiResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -9,6 +11,47 @@ from audio.models import *
 from django.db.models import Q
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary='Retrieves a list of audio messages',
+        description="Retrieves a list of audio messages assigned to or created by the authenticated user. Staff "
+                    "users can view all tasks.",
+        request=AudioMessageSerializer,
+        responses={
+            200: AudioMessageSerializer(many=True),
+            404: OpenApiResponse(description='Audio message not found.'),
+        }
+    ),
+    retrieve=extend_schema(
+        summary="Retrieve a single audio message by ID",
+        description="Retrieves a single audio message by ID. The ID is specified in the URL.",
+        request=AudioMessageSerializer,
+        responses={
+            200: AudioMessageSerializer
+        }
+    ),
+    create=extend_schema(
+        summary='Create a new instance of audio message',
+        description='Create a new instance of audio message with the authenticated user as the creator.',
+        request=AudioMessageSerializer,
+        responses={
+            201: AudioMessageSerializer,
+        }
+    ),
+    destroy=extend_schema(
+        summary='Delete an instance of audio message',
+        description='Delete an instance of audio message with the given primary key. If the authenticated user is a '
+                    'staff member, the instance will be permanently deleted. Otherwise, the instance will be '
+                    'soft-deleted by setting its "is_deleted" field to True.',
+        request=AudioMessageSerializer,
+        responses={
+            204: {'description': 'The instance was successfully deleted.'},
+            403: {'description': 'The authenticated user is not authorized to delete this instance.'},
+            404: {'description': 'The instance with the given primary key was not found.'}
+        }
+    )
+)
+@extend_schema(tags=["Audio"])
 class AudioMessageViewSet(viewsets.ModelViewSet):
     queryset = AudioMessage.objects.all()
     serializer_class = AudioMessageSerializer
