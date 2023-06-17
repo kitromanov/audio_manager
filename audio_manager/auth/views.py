@@ -1,17 +1,19 @@
 import jwt
-from drf_spectacular.utils import extend_schema
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils.encoding import smart_bytes, smart_str, DjangoUnicodeDecodeError
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from rest_framework.response import Response
 from rest_framework import generics, status, views
 from rest_framework.permissions import AllowAny
 
-from auth.serializers import RegisterSerializer, LoginSerializer, EmailVerificationSerializer
+from auth.serializers import RegisterSerializer, LoginSerializer, EmailVerificationSerializer, \
+    ResetPasswordEmailRequestSerializer, SetNewPasswordSerializer
 from user.models import User
 from .renderers import UserRenderer
 from .util import Util
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.urls import reverse
 from django.conf import settings
-from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 import os
@@ -24,43 +26,19 @@ class LoginView(generics.GenericAPIView):
     serializer_class = LoginSerializer
     permission_classes = (AllowAny,)
 
-    # @extend_schema(
-    #     request=LoginSerializer,
-    #     responses={status.HTTP_200_OK: LoginSerializer}
-    # )
     def post(self, request):
-        """
-        User login.
-
-        Authenticates the user based on the passed credentials.
-
-        :param request: request object
-        :return: response object
-        """
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class RegisterView(generics.CreateAPIView):
+class RegisterView(generics.GenericAPIView):
     serializer_class = RegisterSerializer
     renderer_classes = (UserRenderer,)
     permission_classes = (AllowAny,)
 
-    # @extend_schema(
-    #     request=RegisterSerializer,
-    #     responses={status.HTTP_201_CREATED: RegisterSerializer}
-    # )
     def post(self, request):
-        """
-        Register a new user.
-
-        Creates a new user based on the provided data and sends an email for email verification.
-
-        :param request: the request object
-        :return: the response object
-        """
         user = request.data
         serializer = self.serializer_class(data=user)
         serializer.is_valid(raise_exception=True)
@@ -92,20 +70,8 @@ class EmailVerify(views.APIView):
                                            type=openapi.TYPE_STRING,
                                            )
 
-    @swagger_auto_schema(manual_parameters=[token_param_config])
-    # @extend_schema(
-    #     parameters=[token_param_config],
-    #     responses={status.HTTP_200_OK: {'email': 'Successfully activated'}}
-    # )
-    def get(self, request):
-        """
-        Email confirmation.
-
-        Confirms the user's email based on the passed token.
-
-        :param request: request object
-        :return: response object
-        """
+    @staticmethod
+    def get(request):
         token = request.GET.get('token')
         try:
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms='HS256')
@@ -114,7 +80,66 @@ class EmailVerify(views.APIView):
                 user.is_confirmed = True
                 user.save()
             return Response({'email': 'Successfully activated'}, status=status.HTTP_200_OK)
-        except jwt.ExpiredSignatureError as identifier:
+        except jwt.ExpiredSignatureError:
             return Response({'error': 'Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
-        except jwt.exceptions.DecodeError as identifier:
+        except jwt.exceptions.DecodeError:
             return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RequestPasswordResetEmail(generics.GenericAPIView):
+    serializer_class = ResetPasswordEmailRequestSerializer
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        email = request.data.get('email', '')
+        if User.objects.filter(email=email).exists():
+            user = User.objects.get(email=email)
+            uidb64 = urlsafe_base64_encode(smart_bytes(user.id))
+            token = PasswordResetTokenGenerator().make_token(user)
+            relative_link = reverse('password_reset_confirm', kwargs={
+                'uidb64': uidb64,
+                'token': token
+            })
+            abs_url = os.getenv("HOST_NAME") + relative_link + '?token=' + str(token)
+            data = {
+                'email_body': 'Hi, ' + user.username + '! Use link below to reset you password.\n\n' + abs_url,
+                'domain': abs_url,
+                'email_subject': 'Reset your password',
+                'to_email': (user.email,),
+            }
+            Util.send_email(data)
+        return Response({'success': 'We have sent you a link to reset your password'},
+                        status=status.HTTP_200_OK)
+
+
+class PasswordTokenCheckAPI(generics.GenericAPIView):
+    serializer_class = SetNewPasswordSerializer
+
+    @staticmethod
+    def get(request, uidb64, token):
+
+        try:
+            user_id = smart_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(id=user_id)
+
+            if not PasswordResetTokenGenerator().check_token(user, token):
+                return Response({'error': 'Token is not valid, please request a new one'},
+                                status=status.HTTP_401_UNAUTHORIZED)
+
+            return Response({'success': True, 'message': 'Credentials Valid', 'uidb64': uidb64, 'token': token},
+                            status=status.HTTP_200_OK)
+
+        except DjangoUnicodeDecodeError:
+            if not PasswordResetTokenGenerator().check_token(user):
+                return Response({'error': 'Token is not valid, please request a new one'},
+                                status=status.HTTP_401_UNAUTHORIZED)
+
+
+class SetNewPasswordAPIView(generics.GenericAPIView):
+    serializer_class = SetNewPasswordSerializer
+    permission_classes = (AllowAny,)
+
+    def patch(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response({'success': True, 'message': 'Password reset success'}, status=status.HTTP_200_OK)
