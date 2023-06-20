@@ -33,7 +33,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(auto_now=True)
 
     is_confirmed = models.BooleanField(default=False)
-    is_blocked = models.BooleanField(default=False)
+    is_blocked = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
