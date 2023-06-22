@@ -39,7 +39,6 @@ class TagSerializer(TaggitSerializer, serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    # user = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:
         model = Comment

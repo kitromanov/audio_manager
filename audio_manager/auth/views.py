@@ -30,6 +30,7 @@ class LoginView(generics.GenericAPIView):
     @extend_schema(
         request=LoginSerializer,
         responses={200: LoginSerializer},
+        summary="Log in user",
         description="Allows users to log in with their credentials and get an access token."
     )
     def post(self, request):
@@ -47,6 +48,7 @@ class RegisterView(generics.GenericAPIView):
     @extend_schema(
         request=RegisterSerializer,
         responses={201: RegisterSerializer},
+        summary="Register user",
         description="Allows users to register with their email and username and get a verification link."
     )
     def post(self, request):
@@ -88,6 +90,7 @@ class EmailVerify(views.APIView):
             400: openapi.Response('Activation expired or invalid token'),
             404: openapi.Response('User not found'),
         },
+        summary="Verify user email",
         description="Allows users to verify their email by using the token sent to them."
     )
     def get(request):
@@ -116,6 +119,7 @@ class RequestPasswordResetEmail(generics.GenericAPIView):
             400: OpenApiResponse(description='Invalid email format'),
             404: OpenApiResponse(description='User with this email does not exist'),
         },
+        summary='Request password reset email'
     )
     def post(self, request):
         email = request.data.get('email', '')
@@ -154,6 +158,7 @@ class PasswordTokenCheckAPI(generics.GenericAPIView):
             400: openapi.Response('Token is not valid or expired'),
             401: openapi.Response('Token is not valid or expired')
         },
+        summary='Check password reset token',
         description='Allows users to check if their password reset token is valid.'
     )
     def get(self, request, uidb64, token):
@@ -195,6 +200,7 @@ class SetNewPasswordAPIView(generics.GenericAPIView):
             400: OpenApiResponse(description='Invalid or expired token'),
             404: OpenApiResponse(description='User not found'),
         },
+        summary='Reset user password'
     )
     def patch(self, request):
         serializer = self.serializer_class(data=request.data)

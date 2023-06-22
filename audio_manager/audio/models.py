@@ -37,6 +37,8 @@ class AudioMessage(models.Model):
     is_deleted = models.BooleanField(default=False)
     tags = TaggableManager()
 
+    objects = models.Manager()
+
     class Meta:
         verbose_name = _('audio message')
         verbose_name_plural = _('audio messages')
@@ -77,6 +79,8 @@ class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments_user')
     audio_message = models.ForeignKey(AudioMessage, on_delete=models.CASCADE, related_name='comments_audio_message')
     text = models.TextField()
+
+    objects = models.Manager()
 
     class Meta:
         verbose_name = _('comment')

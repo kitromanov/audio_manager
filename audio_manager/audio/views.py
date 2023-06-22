@@ -1,5 +1,5 @@
-from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import extend_schema, OpenApiParameter, extend_schema_view, OpenApiResponse
+from django.core.exceptions import ObjectDoesNotExist
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -38,6 +38,22 @@ from django.db.models import Q
             201: AudioMessageSerializer,
         }
     ),
+    partial_update=extend_schema(
+            summary='Partial update audio message',
+            description='Partially update an existing audio message by ID',
+            request=AudioMessageSerializer,
+            responses={
+                200: AudioMessageSerializer,
+            },
+        ),
+    update=extend_schema(
+            summary='Update audio message',
+            description='Update an existing audio message by ID',
+            request=AudioMessageSerializer,
+            responses={
+                200: AudioMessageSerializer,
+            },
+        ),
     destroy=extend_schema(
         summary='Delete an instance of audio message',
         description='Delete an instance of audio message with the given primary key. If the authenticated user is a '
@@ -84,11 +100,21 @@ class AudioMessageViewSet(viewsets.ModelViewSet):
             return self.queryset.filter(Q(assigned_users=self.request.user) | Q(creator=self.request.user),
                                         is_deleted=False)
 
+    @extend_schema(
+        summary="Get tags for an audio file",
+        responses={200: TagSerializer(many=True)},
+    )
     @action(detail=True, methods=['get'])
     def tags(self, request, pk=None):
         audio = self.get_object()
         return Response(audio.tags.names())
 
+    @extend_schema(
+        summary="List all tags for an audio message",
+        responses={
+            200: TagSerializer(many=True),
+        },
+    )
     @action(detail=True, methods=['post'], url_path='add-tag')
     def add_tag(self, request, pk=None):
         audio = self.get_object()
@@ -98,6 +124,10 @@ class AudioMessageViewSet(viewsets.ModelViewSet):
         audio.save()
         return Response({'status': 'success'}, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        summary="Delete a tag from an audio file",
+        responses={200: TagSerializer()},
+    )
     @action(detail=True, methods=['delete'], url_path='delete-tag')
     def delete_tag(self, request, pk=None):
         audio = self.get_object()
@@ -107,9 +137,14 @@ class AudioMessageViewSet(viewsets.ModelViewSet):
         audio.save()
         return Response({'status': 'success'}, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        request=AudioMessageSerializer,
+        responses={200: AudioMessageSerializer},
+        summary="Update an existing audio-message",
+    )
     @action(detail=True,
             methods=['put'],
-            url_path='delete-tag'
+            url_path='edit-tag'
             )
     def edit_tag(self, request, pk=None):
         audio = self.get_object()
@@ -120,6 +155,11 @@ class AudioMessageViewSet(viewsets.ModelViewSet):
         tag.save()
         return Response({'status': 'success'}, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        summary="Leave a comment on an audio message",
+        request=CommentSerializer,
+        responses={201: CommentSerializer},
+    )
     @action(detail=True,
             methods=['post'],
             url_path='leave-comment',
@@ -135,6 +175,10 @@ class AudioMessageViewSet(viewsets.ModelViewSet):
         serializer = CommentSerializer(comment)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @extend_schema(
+        summary="Retrieve all comments for an audio message",
+        responses={200: CommentSerializer(many=True)},
+    )
     @action(detail=True,
             methods=['get'],
             permission_classes=[IsStaffOrCreatorOrAssignedUser]
@@ -144,6 +188,12 @@ class AudioMessageViewSet(viewsets.ModelViewSet):
         serializer = CommentSerializer(comments, many=True)
         return Response(serializer.data)
 
+    @extend_schema(
+        description='Delete a comment on an audio message',
+        responses={
+            200: CommentSerializer(),
+        }
+    )
     @action(detail=True, methods=['delete'],
             url_path='delete-comment',
             permission_classes=[IsStaffOrCreatorOrAssignedUser]
@@ -152,6 +202,6 @@ class AudioMessageViewSet(viewsets.ModelViewSet):
         try:
             comment = Comment.objects.get(pk=request.data.get('comment_id'))
             comment.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Comment.DoesNotExist:
+            return Response({'status': 'success'}, status=status.HTTP_200_OK)
+        except ObjectDoesNotExist:
             return Response({'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
