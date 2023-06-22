@@ -1,29 +1,13 @@
-import os
-
-import expression
 from django.contrib.auth.password_validation import validate_password
-from django.contrib.sites.shortcuts import get_current_site
-from django.core.mail import EmailMessage
-from django.http import HttpResponse
-from django.shortcuts import render
-from django.template.loader import render_to_string
-from django.urls import reverse
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.validators import UniqueValidator
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from auth.forms import SignupForm
-from auth.tokens import account_activation_token
 from user.models import User
 from django.contrib import auth
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.utils.encoding import smart_str, force_str, smart_bytes, DjangoUnicodeDecodeError
-from .util import Util
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
 
 
 class LoginSerializer(serializers.ModelSerializer):
@@ -55,7 +39,6 @@ class LoginSerializer(serializers.ModelSerializer):
             'tokens': user.tokens,
         }
 
-        return super().validate(attrs)
 
 
 class EmailVerificationSerializer(serializers.ModelSerializer):
@@ -142,4 +125,14 @@ class SetNewPasswordSerializer(serializers.Serializer):
             return user
         except Exception as e:
             raise AuthenticationFailed('The reset link is invalid', 401)
-        return super().validate(attrs)
+
+
+class PasswordResetResponseSerializer(serializers.Serializer):
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
+
+    success = serializers.BooleanField()
+    message = serializers.CharField()

@@ -1,6 +1,6 @@
 from django.contrib.admin.views.decorators import staff_member_required
 from django.utils.decorators import method_decorator
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse, OpenApiParameter
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -21,7 +21,6 @@ from rest_framework.response import Response
 #             200: UserSerializer(many=True),
 #             401: 'Unauthorized',
 #         },
-#         security=[],
 #     ),
 #     retrieve=swagger_auto_schema(
 #         operation_summary='Retrieve user',
@@ -31,7 +30,6 @@ from rest_framework.response import Response
 #             401: 'Unauthorized',
 #             404: 'Not found',
 #         },
-#         security=[],
 #     ),
 #     create=swagger_auto_schema(
 #         operation_summary='Create user',
@@ -42,7 +40,6 @@ from rest_framework.response import Response
 #             401: 'Unauthorized',
 #             400: 'Bad request',
 #         },
-#         security=[],
 #     ),
 #     update=swagger_auto_schema(
 #         operation_summary='Update user',
@@ -54,7 +51,6 @@ from rest_framework.response import Response
 #             400: 'Bad request',
 #             404: 'Not found',
 #         },
-#         security=[],
 #     ),
 #     partial_update=swagger_auto_schema(
 #         operation_summary='Partial update user',
@@ -79,16 +75,36 @@ from rest_framework.response import Response
 #         security=[{'Bearer': []}],
 #     ),
 # )
+# @extend_schema(
+#     description="A viewset for users",
+#     responses={
+#         200: UserSerializer(many=True),
+#         403: OpenApiResponse(description="Forbidden"),
+#     },
+# )
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
+    @extend_schema(
+        description="List all users or filter by id if not staff",
+        responses={
+            200: OpenApiResponse(response=UserSerializer(many=True), description="OK"),
+            500: OpenApiResponse(description="Server error")
+        }
+    )
     def get_queryset(self):
         if self.request.user.is_staff:
             return self.queryset.all()
         else:
             return self.queryset.filter(id=self.request.user.id)
 
+    @extend_schema(
+        description="List all blocked users",
+        parameters=[OpenApiParameter(name="is_blocked", type=bool, location=OpenApiParameter.QUERY,
+                                     description="Filter by blocked status")],
+        responses={200: UserSerializer(many=True)}
+    )
     @action(methods=['get'], detail=False)
     @method_decorator(staff_member_required)
     def blocked(self, request):

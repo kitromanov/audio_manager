@@ -2,6 +2,7 @@ import jwt
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import smart_bytes, smart_str, DjangoUnicodeDecodeError
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, OpenApiExample
 from rest_framework.response import Response
 from rest_framework import generics, status, views
 from rest_framework.permissions import AllowAny
@@ -26,6 +27,11 @@ class LoginView(generics.GenericAPIView):
     serializer_class = LoginSerializer
     permission_classes = (AllowAny,)
 
+    @extend_schema(
+        request=LoginSerializer,
+        responses={200: LoginSerializer},
+        description="Allows users to log in with their credentials and get an access token."
+    )
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -38,6 +44,11 @@ class RegisterView(generics.GenericAPIView):
     renderer_classes = (UserRenderer,)
     permission_classes = (AllowAny,)
 
+    @extend_schema(
+        request=RegisterSerializer,
+        responses={201: RegisterSerializer},
+        description="Allows users to register with their email and username and get a verification link."
+    )
     def post(self, request):
         user = request.data
         serializer = self.serializer_class(data=user)
@@ -71,6 +82,14 @@ class EmailVerify(views.APIView):
                                            )
 
     @staticmethod
+    @extend_schema(
+        responses={
+            200: openapi.Response('Email successfully activated'),
+            400: openapi.Response('Activation expired or invalid token'),
+            404: openapi.Response('User not found'),
+        },
+        description="Allows users to verify their email by using the token sent to them."
+    )
     def get(request):
         token = request.GET.get('token')
         try:
@@ -90,24 +109,34 @@ class RequestPasswordResetEmail(generics.GenericAPIView):
     serializer_class = ResetPasswordEmailRequestSerializer
     permission_classes = (AllowAny,)
 
+    @extend_schema(
+        request=ResetPasswordEmailRequestSerializer,
+        responses={
+            200: OpenApiResponse(description='We have sent you a link to reset your password'),
+            400: OpenApiResponse(description='Invalid email format'),
+            404: OpenApiResponse(description='User with this email does not exist'),
+        },
+    )
     def post(self, request):
         email = request.data.get('email', '')
-        if User.objects.filter(email=email).exists():
-            user = User.objects.get(email=email)
-            uidb64 = urlsafe_base64_encode(smart_bytes(user.id))
-            token = PasswordResetTokenGenerator().make_token(user)
-            relative_link = reverse('password_reset_confirm', kwargs={
-                'uidb64': uidb64,
-                'token': token
-            })
-            abs_url = os.getenv("HOST_NAME") + relative_link + '?token=' + str(token)
-            data = {
-                'email_body': 'Hi, ' + user.username + '! Use link below to reset you password.\n\n' + abs_url,
-                'domain': abs_url,
-                'email_subject': 'Reset your password',
-                'to_email': (user.email,),
-            }
-            Util.send_email(data)
+        if not User.objects.filter(email=email).exists():
+            return Response({'error': 'User with this email does not exist'},
+                            status=status.HTTP_404_NOT_FOUND)
+        user = User.objects.get(email=email)
+        uidb64 = urlsafe_base64_encode(smart_bytes(user.id))
+        token = PasswordResetTokenGenerator().make_token(user)
+        relative_link = reverse('password_reset_confirm', kwargs={
+            'uidb64': uidb64,
+            'token': token
+        })
+        abs_url = os.getenv("HOST_NAME") + relative_link + '?token=' + str(token)
+        data = {
+            'email_body': 'Hi, ' + user.username + '! Use link below to reset you password.\n\n' + abs_url,
+            'domain': abs_url,
+            'email_subject': 'Reset your password',
+            'to_email': (user.email,),
+        }
+        Util.send_email(data)
         return Response({'success': 'We have sent you a link to reset your password'},
                         status=status.HTTP_200_OK)
 
@@ -115,12 +144,23 @@ class RequestPasswordResetEmail(generics.GenericAPIView):
 class PasswordTokenCheckAPI(generics.GenericAPIView):
     serializer_class = SetNewPasswordSerializer
 
-    @staticmethod
-    def get(request, uidb64, token):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter('uidb64', str, 'path', description='The base64 encoded user id'),
+            OpenApiParameter('token', str, 'path', description='The password reset token')
+        ],
+        responses={
+            200: openapi.Response('Credentials valid'),
+            400: openapi.Response('Token is not valid or expired'),
+            401: openapi.Response('Token is not valid or expired')
+        },
+        description='Allows users to check if their password reset token is valid.'
+    )
+    def get(self, request, uidb64, token):
 
         try:
-            user_id = smart_str(urlsafe_base64_decode(uidb64))
-            user = User.objects.get(id=user_id)
+            use_id = smart_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(id=use_id)
 
             if not PasswordResetTokenGenerator().check_token(user, token):
                 return Response({'error': 'Token is not valid, please request a new one'},
@@ -129,16 +169,33 @@ class PasswordTokenCheckAPI(generics.GenericAPIView):
             return Response({'success': True, 'message': 'Credentials Valid', 'uidb64': uidb64, 'token': token},
                             status=status.HTTP_200_OK)
 
-        except DjangoUnicodeDecodeError:
-            if not PasswordResetTokenGenerator().check_token(user):
+        except DjangoUnicodeDecodeError as identifier:
+            try:
+                if not PasswordResetTokenGenerator().check_token(user):
+                    return Response({'error': 'Token is not valid, please request a new one'},
+                                    status=status.HTTP_401_UNAUTHORIZED)
+
+            except UnboundLocalError as e:
                 return Response({'error': 'Token is not valid, please request a new one'},
-                                status=status.HTTP_401_UNAUTHORIZED)
+                                status=status.HTTP_400_BAD_REQUEST)
 
 
 class SetNewPasswordAPIView(generics.GenericAPIView):
     serializer_class = SetNewPasswordSerializer
     permission_classes = (AllowAny,)
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(name='uidb64', description='The base64 encoded user id', required=True),
+            OpenApiParameter(name='token', description='The password reset token', required=True),
+        ],
+        request=SetNewPasswordSerializer,
+        responses={
+            200: OpenApiResponse(description='Password reset success'),
+            400: OpenApiResponse(description='Invalid or expired token'),
+            404: OpenApiResponse(description='User not found'),
+        },
+    )
     def patch(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
