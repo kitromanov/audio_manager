@@ -19,6 +19,7 @@ class TestView(CommonTestSetUp):
         self.assertEqual(login_res.status_code, 200)
 
     def test_request_password_reset_email_sends_email_on_existing_user(self):
+        self.register_user()
         res = self.client.post(self.reset_password_url, self.user_data, format='json')
         self.assertEqual(res.status_code, 200)
         self.assertIn('success', res.data)
