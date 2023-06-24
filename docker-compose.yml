@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:12.0-alpine
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=audio_manager_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  web:
+    build: .
+    depends_on:
+      - db
+    env_file:
+      - .env
+    environment:
+      - DATABASE_NAME=audio_manager_db
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+#      - DATABASE_PASSWORD=163264
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+    ports:
+      - "8000:8000"
+volumes:
+  pgdata:
