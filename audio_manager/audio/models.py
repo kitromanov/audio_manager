@@ -8,6 +8,7 @@ from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
+from audio import tasks
 from audio.recognition import RecognitionLongAudio
 from taggit.managers import TaggableManager
 from user.models import User
@@ -67,7 +68,7 @@ class AudioMessage(models.Model):
 
     def save(self, *args, **kwargs):
         file = default_storage.save(self.audio_file.name, self.audio_file)
-        self.text = self.get_audio_text(file)
+        self.text = tasks.get_audio_text.delay(file).get()
         self.duration = self.get_duration(file)
         self.file_name = self.audio_file.name
         default_storage.delete(file)

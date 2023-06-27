@@ -3,7 +3,6 @@ from rest_framework.reverse import reverse
 
 from audio.models import AudioMessage
 from tests_settings.test_setup import CommonTestSetUp
-from user.models import User
 
 
 class TestView(CommonTestSetUp):

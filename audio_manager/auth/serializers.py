@@ -26,12 +26,12 @@ class LoginSerializer(serializers.ModelSerializer):
         password = attrs.get('password', '')
 
         user = auth.authenticate(email=email, password=password)
+        if not user:
+            raise AuthenticationFailed('Invalid credentials, try again.')
         if not user.is_confirmed:
             raise AuthenticationFailed('Email is not verified.')
         if user.is_blocked:
             raise AuthenticationFailed('Account disabled, contact admin.')
-        if not user:
-            raise AuthenticationFailed('Invalid credentials, try again.')
 
         return {
             'email': user.email,

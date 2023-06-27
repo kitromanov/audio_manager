@@ -6,7 +6,7 @@ COPY requirements.txt .
 
 RUN pip install -r requirements.txt
 
-COPY . .
+COPY .. .
 
 EXPOSE 8000
 
@@ -21,4 +21,4 @@ RUN mkdir -p /root/.aws \
     && echo "aws_access_key_id=${AWS_ACCESS_KEY_ID}" >> /root/.aws/credentials \
     && echo "aws_secret_access_key=${AWS_SECRET_ACCESS_KEY}" >> /root/.aws/credentials
 
-CMD ["python", "audio_manager/manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

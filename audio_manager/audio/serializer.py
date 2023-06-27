@@ -15,9 +15,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# TODO: add celery
-# TODO: add .ogg parsing
-# TODO: adding by URL
 class AudioMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = AudioMessage
